@@ -1,3 +1,1 @@
-export const helloChibivue = () => {
-  console.log("Hello Chibivue");
-};
+export * from "./runtime-dom";
