@@ -9,7 +9,9 @@
     },
     "moduleResolution": "node",
     "allowJs": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "outDir": "dist"
   },
   "include": ["./packages/**/*.ts", "examples/**/*.ts"],
   "exclude": ["node_modules", "dist"]
