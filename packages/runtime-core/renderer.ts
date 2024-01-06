@@ -1,24 +1,59 @@
-export type RootRenderFunction<HostElement = RendererElement> = (
-  message: string,
-  container: HostElement
-) => void;
+import { VNode } from './vnode'
 
-export interface RendererOptions<HostNode = RendererNode> {
-  setElementText(node: HostNode, text: string): void;
+export type RootRenderFunction<HostElement = RendererElement> = (
+  vnode: VNode,
+  container: HostElement,
+) => void
+
+export interface RendererOptions<
+  HostNode = RendererNode,
+  HostElement = RendererElement,
+> {
+  patchProp(el: HostElement, key: string, value: any): void
+
+  createElement(type: string): HostElement
+
+  createText(text: string): HostNode
+
+  setElementText(node: HostNode, text: string): void
+
+  insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
 }
 
 export interface RendererNode {
-  [key: string]: any;
+  [key: string]: any
 }
 
 export interface RendererElement extends RendererNode {}
 
 export function createRenderer(options: RendererOptions) {
-  const { setElementText: hostSetElementText } = options;
+  const {
+    patchProp: hostPatchProp,
+    createElement: hostCreateElement,
+    createText: hostCreateText,
+    insert: hostInsert,
+  } = options
 
-  const render: RootRenderFunction = (message, container) => {
-    hostSetElementText(container, message);
-  };
+  function renderVNode(vnode: VNode | string) {
+    if (typeof vnode === 'string') return hostCreateText(vnode)
+    const el = hostCreateElement(vnode.type)
 
-  return { render };
+    Object.entries(vnode.props).forEach(([key, value]) => {
+      hostPatchProp(el, key, value)
+    })
+
+    for (const child of vnode.children) {
+      const childEl = renderVNode(child)
+      hostInsert(childEl, el)
+    }
+
+    return el
+  }
+
+  const render: RootRenderFunction = (vnode, container) => {
+    const el = renderVNode(vnode)
+    hostInsert(el, container)
+  }
+
+  return { render }
 }
