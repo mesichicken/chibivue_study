@@ -10,7 +10,7 @@
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }
   ]
 }
