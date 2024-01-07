@@ -39,7 +39,7 @@ export function patchEvent(
     // patch
     existingInvoker.value = value;
   } else {
-    const name = parseName(rawName)
+    const name = parseName(rawName);
     if (value) {
       // add
       const invoker = (invokers[rawName] = createInvoker(value));
@@ -59,7 +59,7 @@ export function patchEvent(
     const invoker: Invoker = (e: Event) => {
       invoker.value(e);
     };
-    invoker.value = initialValue
+    invoker.value = initialValue;
     return invoker;
   }
 }
