@@ -5,8 +5,12 @@ export const nodeOps: Omit<RendererOptions<Node, Element>, "patchProp"> = {
     return document.createElement(tagName);
   },
 
-  createText: (text: string) => {
+  createText: (text) => {
     return document.createTextNode(text);
+  },
+
+  setText: (node, text) => {
+    node.nodeValue = text;
   },
 
   setElementText(node, text) {
