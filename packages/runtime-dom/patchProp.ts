@@ -1,11 +1,11 @@
-import { RendererOptions } from "../runtime-core";
-import { patchAttr } from "./modules/attrs";
-import { patchEvent } from "./modules/events";
+import { RendererOptions } from "../runtime-core"
+import { patchAttr } from "./modules/attrs"
+import { patchEvent } from "./modules/events"
 
-type DOMRendererOptions = RendererOptions<Node, Element>;
+type DOMRendererOptions = RendererOptions<Node, Element>
 
-const onRE = /^on[^a-z]/;
-export const isOn = (key: string) => onRE.test(key);
+const onRE = /^on[^a-z]/
+export const isOn = (key: string) => onRE.test(key)
 
 /**
  * 関数はまず、keyがイベントリスナーを示すものかどうかをisOnを使って判断します。
@@ -14,8 +14,8 @@ export const isOn = (key: string) => onRE.test(key);
  */
 export const patchProp: DOMRendererOptions["patchProp"] = (el, key, value) => {
   if (isOn(key)) {
-    patchEvent(el, key, value);
+    patchEvent(el, key, value)
   } else {
-    patchAttr(el, key, value);
+    patchAttr(el, key, value)
   }
-};
+}
