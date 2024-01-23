@@ -1,6 +1,6 @@
 import { ReactiveEffect } from "../reactivity"
-import { Component } from "./component"
-import { Text, VNode, normalizeVNode } from "./vnode"
+import { Component, ComponentInternalInstance, InternalRenderFunction, createComponentInstance } from "./component"
+import { Text, VNode, createVNode, normalizeVNode } from "./vnode"
 
 // ルートレンダリング関数の型定義。VNodeを受け取り、指定されたコンテナに描画
 export type RootRenderFunction<HostElement = RendererElement> = (
@@ -24,6 +24,8 @@ export interface RendererOptions<
   setElementText(node: HostNode, text: string): void
 
   insert(child: HostNode, parent: HostNode, anchor?: HostNode | null): void
+
+  parentNode(node: HostNode): HostNode | null
 }
 
 // レンダラーノードの基本的なインターフェース
@@ -43,6 +45,7 @@ export function createRenderer(options: RendererOptions) {
     createText: hostCreateText,
     setText: hostSetText,
     insert: hostInsert,
+    parentNode: hostParentNode,
   } = options
 
   // VNodeをパッチ（更新）する関数
@@ -50,8 +53,10 @@ export function createRenderer(options: RendererOptions) {
     const { type } = n2
     if (type === Text) {
       processText(n1, n2, container)
-    } else {
+    } else if (typeof type === "string") {
       processElement(n1, n2, container)
+    } else if (typeof type === "object") {
+      processComponent(n1, n2, container)
     }
   }
 
@@ -141,21 +146,86 @@ export function createRenderer(options: RendererOptions) {
     }
   }
 
-  // レンダリング関数
-  const render: RootRenderFunction = (rootComponent, container) => {
-    const componentRender = rootComponent.setup!()
+  // コンポーネントを処理する関数
+  const processComponent = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement
+  ) => {
+    if (n1 === null) {
+      mountComponent(n2, container)
+    } else {
+      updateComponent(n1, n2)
+    }
+  }
 
-    let n1: VNode | null = null
+  // コンポーネントをマウントする関数
+  const mountComponent = (initialVNode: VNode, container: RendererElement) => {
+    const instance: ComponentInternalInstance = (initialVNode.component =
+      createComponentInstance(initialVNode))
 
-    // コンポーネントの更新関数
-    const updateComponent = () => {
-      const n2 = componentRender()
-      patch(n1, n2, container)
-      n1 = n2
+    const component = initialVNode.type as Component
+    // setup関数があれば実行し、render関数を取得
+    if (component.setup) {
+      instance.render = component.setup() as InternalRenderFunction
     }
 
-    const effect = new ReactiveEffect(updateComponent)
-    effect.run()
+    setupRenderEffect(instance, initialVNode, container)
+  }
+
+  // コンポーネントのレンダリングを行う関数
+  const setupRenderEffect = (
+    instance: ComponentInternalInstance,
+    initialVNode: VNode,
+    container: RendererElement
+  ) => {
+    const componentUpdateFn = () => {
+      const { render } = instance
+
+      if (!instance.isMounted) {
+        // mount process
+        const subTree = (instance.subTree = normalizeVNode(render()))
+        patch(null, subTree, container)
+        initialVNode.el = subTree.el
+        instance.isMounted = true
+      } else {
+        // patch process
+        let { next, vnode } = instance
+
+        if (next) {
+          next.el = vnode.el
+          next.component = instance
+          instance.vnode = next
+          instance.next = null
+        } else {
+          next = vnode
+        }
+
+        const prevTree = instance.subTree
+        const nextTree = normalizeVNode(render())
+        instance.subTree = nextTree
+
+        patch(prevTree, nextTree, hostParentNode(prevTree.el!)!)
+        next.el = nextTree.el
+      }
+    }
+
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn))
+    const update = (instance.update = () => effect.run()) // instance.updateに登録
+    update()
+  }
+
+  // コンポーネントをパッチ（更新）する関数
+  const updateComponent = (n1: VNode, n2: VNode) => {
+    const instance = (n2.component = n1.component)!
+    instance.next = n2
+    instance.update()
+  }
+
+  // ルートレンダリング関数を返す
+  const render: RootRenderFunction = (rootComponent, container) => {
+    const vnode = createVNode(rootComponent, {}, [])
+    patch(null, vnode, container)
   }
 
   return { render }

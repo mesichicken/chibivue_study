@@ -1,4 +1,6 @@
-export type VNodeTypes = string | typeof Text
+import { ComponentInternalInstance } from "./component"
+
+export type VNodeTypes = string | typeof Text | object
 
 export const Text = Symbol()
 
@@ -8,6 +10,7 @@ export interface VNode<HostNode = any> {
   children: VNodeNormalizedChildren
 
   el: HostNode | undefined
+  component: ComponentInternalInstance | null
 }
 
 export interface VNodeProps {
@@ -25,7 +28,13 @@ export function createVNode(
   props: VNodeProps | null,
   children: VNodeNormalizedChildren
 ): VNode {
-  const vnode: VNode = { type, props, children: children, el: undefined }
+  const vnode: VNode = {
+    type,
+    props,
+    children: children,
+    el: undefined,
+    component: null,
+  }
   return vnode
 }
 
