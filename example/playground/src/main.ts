@@ -1,6 +1,5 @@
 import { createApp, h, reactive } from 'chibivue'
 
-debugger
 const MyComponent = {
   props: { message: { type: String } },
 
