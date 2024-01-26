@@ -1,4 +1,5 @@
 import { reactive } from '../reactivity'
+import { camelize, hasOwn } from '../shared'
 import { ComponentInternalInstance, Data } from './component'
 
 export type Props = Record<string, PropOptions | null>
@@ -13,7 +14,7 @@ export type PropType<T> = { new (...args: any[]): T & {} }
 
 export function initProps(
   instance: ComponentInternalInstance,
-  rawProps: Data | null
+  rawProps: Data | null,
 ) {
   const props: Data = {}
   setFullProps(instance, rawProps, props)
@@ -22,10 +23,12 @@ export function initProps(
 
 export function updateProps(
   instance: ComponentInternalInstance,
-  rawProps: Data | null
+  rawProps: Data | null,
 ) {
   const { props } = instance
-  Object.assign(props, rawProps)
+  Object.entries(rawProps ?? {}).forEach(([key, value]) => {
+    props[camelize(key)] = value
+  })
 }
 
 function setFullProps(
@@ -36,10 +39,12 @@ function setFullProps(
   const options = instance.propsOptions
 
   if (rawProps) {
-    for (const key in rawProps) {
+    for (let key in rawProps) {
       const value = rawProps[key]
-      if (options && options.hasOwnProperty(key)) {
-        props[key] = value
+      // kebab -> camel
+      let camelKey
+      if (options && hasOwn(options, (camelKey = camelize(key)))) {
+        props[camelKey] = value
       }
     }
   }

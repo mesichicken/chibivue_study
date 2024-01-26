@@ -162,17 +162,17 @@ export function createRenderer(options: RendererOptions) {
 
   // コンポーネントをマウントする関数
   const mountComponent = (initialVNode: VNode, container: RendererElement) => {
-    const instance: ComponentInternalInstance = (initialVNode.component = createComponentInstance(initialVNode))
+    const instance: ComponentInternalInstance = (initialVNode.component =
+      createComponentInstance(initialVNode))
 
     const { props } = instance.vnode
     initProps(instance, props)
 
     const component = initialVNode.type as Component
-    // setup関数があれば実行し、render関数を取得
     if (component.setup) {
-      instance.render = component.setup(
-        instance.props
-      ) as InternalRenderFunction
+      instance.render = component.setup(instance.props, {
+        emit: instance.emit,
+      }) as InternalRenderFunction
     }
 
     setupRenderEffect(instance, initialVNode, container)
