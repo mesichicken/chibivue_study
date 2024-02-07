@@ -14,7 +14,7 @@ export type PropType<T> = { new (...args: any[]): T & {} }
 
 export function initProps(
   instance: ComponentInternalInstance,
-  rawProps: Data | null,
+  rawProps: Data | null
 ) {
   const props: Data = {}
   setFullProps(instance, rawProps, props)
@@ -23,7 +23,7 @@ export function initProps(
 
 export function updateProps(
   instance: ComponentInternalInstance,
-  rawProps: Data | null,
+  rawProps: Data | null
 ) {
   const { props } = instance
   Object.entries(rawProps ?? {}).forEach(([key, value]) => {
@@ -34,12 +34,12 @@ export function updateProps(
 function setFullProps(
   instance: ComponentInternalInstance,
   rawProps: Data | null,
-  props: Data,
+  props: Data
 ) {
   const options = instance.propsOptions
 
   if (rawProps) {
-    for (let key in rawProps) {
+    for (const key in rawProps) {
       const value = rawProps[key]
       // kebab -> camel
       let camelKey
